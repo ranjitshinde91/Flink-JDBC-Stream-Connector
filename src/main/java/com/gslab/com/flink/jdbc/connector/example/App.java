@@ -1,4 +1,4 @@
-package com.gslab.com.flink_jdbc_connector;
+package com.gslab.com.flink.jdbc.connector.example;
 
 
 import java.util.Properties;
