@@ -1,5 +1,6 @@
 package com.gslab.com.flink.jdbc.connector.querier;
 
+import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +30,8 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 	  private String incrementingColumn;
 	  private Long incrementingOffset;
 	  private long timestampDelay = DEFAULT_TIMESTAMP_DELAY;
+	  protected transient JdbcConsumerState jdbcConsumerState;
+
 	  
 	  public TimestampIncrementingTableQuerier(DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
 		  super(deserializer, props);
@@ -37,6 +40,7 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 		  this.timestampColumn = props.getProperty(JdbcSourceConnectorConfig.TIMESTAMP_COLUMN_NAME_CONFIG, null);
 		  timestampOffset = 0L;
 		  incrementingOffset = 0L;
+		  jdbcConsumerState = new JdbcConsumerState();
 	  }
 
 	  protected PreparedStatement createPreparedStatement()throws SQLException {
@@ -67,6 +71,7 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 
 	  public void fetchAndEmitRecords(SourceContext<T> sourceContext) {
 		  this.sourceContext = sourceContext;
+		  while(isRunning){
 			try {
 				if (incrementingColumn != null) {
 				      stmt.setLong(1, (incrementingOffset == null ? -1 : incrementingOffset));
@@ -78,25 +83,88 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 				      stmt.setTimestamp(2, endTime, UTC_CALENDAR);
 				      LOGGER.debug("Executing prepared statement with timestamp value = " + timestampOffset + " (" + JdbcUtils.formatUTC(startTime) + ") " + " end time " + JdbcUtils.formatUTC(endTime));
 				    }
-				LOGGER.info("fetching records from database.");
 				ResultSet rs = stmt.executeQuery();
+				this.checkpointLock = sourceContext.getCheckpointLock();
 				while (rs.next()) {
 					T value = deserializer.deserialize(rs);
 					emitRecord(value);
+					if(rs.last()){
+						updateOffset(rs);
+					}
 				}
 				rs.close();
 			} catch (Exception e) {
 				e.printStackTrace();
-			} finally{
-				closeConnection();
-			}
+			} 
+		  }
 			
 	  }
-	  protected void emitRecord(T record) {
-			sourceContext.collect(record);
-	  }
 	  
-	  public void checkForValidTimeOrIncProperties(Properties props) {
-		  
+	  private void updateOffset(ResultSet rs) throws SQLException {
+		  if (incrementingColumn != null) {
+			  this.incrementingOffset = rs.getLong(this.incrementingColumn);
+		  }
+		  else if(timestampColumn != null){
+			  this.timestampOffset = rs.getLong(this.timestampColumn);
+		  }
 	  }
+
+	protected void emitRecord(T record) {
+			sourceContext.collect(record);
+	}
+	  
+	public void checkForValidTimeOrIncProperties(Properties props) {
+		  
+	}
+	  
+
+	@Override
+	public JdbcConsumerState snapshotState(long checkpointId, long checkpointTimestamp) throws Exception {
+		this.jdbcConsumerState.setIncrementingOffset(this.incrementingOffset);
+		this.jdbcConsumerState.setTimestampOffset(this.timestampOffset);
+		
+		System.out.println("this.timestampOffset "+this.timestampOffset +" this.incrementingOffset "+this.incrementingOffset);
+		return this.jdbcConsumerState;
+	}
+
+	@Override
+	public void restoreState(Serializable state) throws Exception {
+		this.jdbcConsumerState = (JdbcConsumerState)state;
+	}
+	
+	
+	private static class JdbcConsumerState implements Serializable{
+
+		private static final long serialVersionUID = -2658018473366265467L;
+		private Long timestampOffset;
+		private Long incrementingOffset;
+
+		public JdbcConsumerState(Long timestampOffset, Long incrementingOffset) {
+			this.timestampOffset = timestampOffset;
+			this.incrementingOffset = incrementingOffset;
+		}
+
+		public Long getTimestampOffset() {
+			return timestampOffset;
+		}
+
+		public void setTimestampOffset(Long timestampOffset) {
+			this.timestampOffset = timestampOffset;
+		}
+
+		public Long getIncrementingOffset() {
+			return incrementingOffset;
+		}
+
+		public void setIncrementingOffset(Long incrementingOffset) {
+			this.incrementingOffset = incrementingOffset;
+		}
+
+		public JdbcConsumerState() {
+			this.timestampOffset = 0L;
+			this.incrementingOffset = 0L;
+		}
+
+	}
+
 }

@@ -1,15 +1,18 @@
 package com.gslab.com.flink.jdbc.connector.querier;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 
+import org.apache.flink.streaming.api.checkpoint.Checkpointed;
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext;
 
-public interface Querier<T> {
+
+public interface Querier<T> extends Checkpointed<Serializable>{
 	
 	void openConnection() throws ClassNotFoundException, SQLException;
 	
-	void fetchAndEmitRecords(SourceContext<T> sourceContext);
+	void fetchAndEmitRecords(SourceContext<T> sourceContext) throws SQLException;
 
 	void closeConnection();
-
+	
 }

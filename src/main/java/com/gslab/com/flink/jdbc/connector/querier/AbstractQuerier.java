@@ -6,9 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext;
-import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +21,8 @@ public abstract class AbstractQuerier<T> implements Querier<T>{
 	protected Properties consProp;
 	protected transient Connection dbConn;
 	protected PreparedStatement stmt;
+	protected Object checkpointLock;
+	protected volatile boolean isRunning = true;
 	private static Logger LOGGER = LoggerFactory.getLogger(AbstractQuerier.class);
 
 	public AbstractQuerier(DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
@@ -55,6 +55,10 @@ public abstract class AbstractQuerier<T> implements Querier<T>{
 		} catch (SQLException se) {
 			se.printStackTrace();
 		}
+	}
+	
+	public void cancel() {
+		isRunning = false;
 	}
 
 	protected abstract PreparedStatement createPreparedStatement() throws SQLException;

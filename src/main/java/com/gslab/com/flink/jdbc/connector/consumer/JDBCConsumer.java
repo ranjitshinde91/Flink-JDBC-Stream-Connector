@@ -3,8 +3,11 @@ package com.gslab.com.flink.jdbc.connector.consumer;
 
 import java.sql.SQLException;
 import java.util.Properties;
+
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+
+import com.gslab.com.flink.jdbc.connector.querier.AbstractQuerier;
 import com.gslab.com.flink.jdbc.connector.querier.BulkTableQuerier;
-import com.gslab.com.flink.jdbc.connector.querier.Querier;
 import com.gslab.com.flink.jdbc.connector.querier.TimestampIncrementingTableQuerier;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
@@ -18,7 +21,7 @@ public class JdbcConsumer<T> extends AbstractJdbcConsumer<T>{
 	}
 	
 	@Override
-	protected Querier<T> createQuerier(DeserializationSchema<T> valueDeserializer, Properties properties) throws ClassNotFoundException, SQLException {
+	protected AbstractQuerier<T> createQuerier(DeserializationSchema<T> valueDeserializer, Properties properties) throws ClassNotFoundException, SQLException {
 		String mode = properties.getProperty(JdbcSourceConnectorConfig.QUERY_MODE);
 		switch(mode){
 			case JdbcSourceConnectorConfig.MODE_BULK:
