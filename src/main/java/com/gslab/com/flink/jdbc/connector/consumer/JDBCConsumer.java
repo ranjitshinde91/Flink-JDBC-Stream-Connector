@@ -5,22 +5,23 @@ import java.util.Properties;
 
 import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
 
+import com.gslab.com.flink.jdbc.connector.querier.BulkTableQuerier;
+import com.gslab.com.flink.jdbc.connector.querier.Querier;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
 
-public class JDBCConsumer<T> extends AbstractJDBCConsumer<T>{
-	
+public class JdbcConsumer<T> extends AbstractJdbcConsumer<T>{
 
-	public JDBCConsumer(DeserializationSchema<T> valueDeserializer, Properties props){
+	private static final long serialVersionUID = -286623023203258475L;
+
+	public JdbcConsumer(DeserializationSchema<T> valueDeserializer, Properties props){
 		super(valueDeserializer, props);
 	}
 	
 	@Override
-	protected JDBCFetcher<T> createFetcher(SourceContext<T> sourceContext, StreamingRuntimeContext runtimeContext, DeserializationSchema<T> valueDeserializer,  Properties properties) 
-			throws ClassNotFoundException, SQLException {
-		return new JDBCFetcher(sourceContext, runtimeContext, valueDeserializer, properties);
+	protected Querier<T> createQuerier(SourceContext<T> sourceContext, StreamingRuntimeContext runtimeContext, DeserializationSchema<T> valueDeserializer,
+												Properties properties) throws ClassNotFoundException, SQLException {
+		return new BulkTableQuerier(sourceContext, runtimeContext, valueDeserializer, properties);
 	}
-
-
 
 }

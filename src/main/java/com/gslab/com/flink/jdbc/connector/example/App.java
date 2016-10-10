@@ -8,15 +8,16 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gslab.com.flink.jdbc.connector.consumer.ConsumerProperties;
-import com.gslab.com.flink.jdbc.connector.consumer.JDBCConsumer;
+import com.gslab.com.flink.jdbc.connector.consumer.JdbcConsumer;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 import com.gslab.com.flink.jdbc.connector.serialization.JSONDeserializationSchema;
 
 public class App {
 	public static void main(String[] args) throws Exception {
 		
+		
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(2);
+        env.setParallelism(1);
         env.enableCheckpointing(1000);
         
         Properties properties = new Properties();
@@ -27,7 +28,7 @@ public class App {
         properties.setProperty(ConsumerProperties.SQL_QUERY, "SELECT * FROM user ");
         
         DeserializationSchema<ObjectNode> jsonDeserialiationSchema =  new JSONDeserializationSchema();
-        DataStreamSource<ObjectNode> stream = (DataStreamSource<ObjectNode>)env.addSource(new JDBCConsumer(jsonDeserialiationSchema, properties));
+        DataStreamSource<ObjectNode> stream = (DataStreamSource<ObjectNode>)env.addSource(new JdbcConsumer(jsonDeserialiationSchema, properties));
 		
         stream.print();
         
