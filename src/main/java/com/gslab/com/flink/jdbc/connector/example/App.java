@@ -3,7 +3,6 @@ package com.gslab.com.flink.jdbc.connector.example;
 
 import java.util.Properties;
 
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -25,7 +24,7 @@ public class App {
         properties.setProperty(ConsumerProperties.DB_URL, "jdbc:mysql://localhost/kzphase1");
         properties.setProperty(ConsumerProperties.USERNAME, "root");
         properties.setProperty(ConsumerProperties.PASSWORD, "123");
-        properties.setProperty(ConsumerProperties.SQL_QUERY, "SELECT * FROM widget_config_value ");
+        properties.setProperty(ConsumerProperties.SQL_QUERY, "SELECT * FROM user ");
         
         DeserializationSchema<ObjectNode> jsonDeserialiationSchema =  new JSONDeserializationSchema();
         DataStreamSource<ObjectNode> stream = (DataStreamSource<ObjectNode>)env.addSource(new JDBCConsumer(jsonDeserialiationSchema, properties));
