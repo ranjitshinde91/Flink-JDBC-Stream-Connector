@@ -1,18 +1,17 @@
-package com.gslab.com.flink.jdbc.connector.source;
+package com.gslab.com.flink.jdbc.connector.consumer;
 
 import java.sql.SQLException;
 import java.util.Properties;
 
 import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
 
-import com.gslab.com.flink.jdbc.connector.consumer.JDBCFetcher;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
 
-public class JDBCSource<T> extends AbstractJDBCSource<T>{
+public class JDBCConsumer<T> extends AbstractJDBCConsumer<T>{
 	
 
-	public JDBCSource(DeserializationSchema<T> valueDeserializer, Properties props){
+	public JDBCConsumer(DeserializationSchema<T> valueDeserializer, Properties props){
 		super(valueDeserializer, props);
 	}
 	
