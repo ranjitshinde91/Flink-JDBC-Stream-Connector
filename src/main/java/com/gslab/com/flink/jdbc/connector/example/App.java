@@ -30,13 +30,7 @@ public class App {
         DeserializationSchema<ObjectNode> jsonDeserialiationSchema =  new JSONDeserializationSchema();
         DataStreamSource<ObjectNode> stream = (DataStreamSource<ObjectNode>)env.addSource(new JDBCConsumer(jsonDeserialiationSchema, properties));
 		
-        //stream.print();
-        stream.map(new MapFunction<ObjectNode, String>() {
-
-			public String map(ObjectNode value) throws Exception {
-				return null;
-			}
-		});
+        stream.print();
         
         env.execute();
 	}
