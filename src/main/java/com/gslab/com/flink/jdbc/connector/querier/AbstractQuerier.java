@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.gslab.com.flink.jdbc.connector.consumer.ConsumerProperties;
+import com.gslab.com.flink.jdbc.connector.consumer.JdbcSourceConnectorConfig;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
 public abstract class AbstractQuerier<T> implements Querier<T>{
@@ -33,14 +33,14 @@ public abstract class AbstractQuerier<T> implements Querier<T>{
 	
 	public void openConnection() throws ClassNotFoundException, SQLException{
 		LOGGER.info("loading driver class.");
-		Class.forName(this.consProp.getProperty(ConsumerProperties.JDBC_DRIVER_NAME));
+		Class.forName(this.consProp.getProperty(JdbcSourceConnectorConfig.JDBC_DRIVER_NAME));
 		
 		LOGGER.info("Connecting to a selected database...");
-		dbConn = (Connection) DriverManager.getConnection(this.consProp.getProperty(ConsumerProperties.DB_URL), this.consProp.getProperty(ConsumerProperties.USERNAME), this.consProp.getProperty(ConsumerProperties.PASSWORD));
+		dbConn = (Connection) DriverManager.getConnection(this.consProp.getProperty(JdbcSourceConnectorConfig.DB_URL), this.consProp.getProperty(JdbcSourceConnectorConfig.USERNAME), this.consProp.getProperty(JdbcSourceConnectorConfig.PASSWORD));
 		LOGGER.info("Connected database successfully.");
 		
 		LOGGER.info("Creating statement.");
-		stmt = createPreparedStatement(this.consProp.getProperty(ConsumerProperties.SQL_QUERY));
+		stmt = createPreparedStatement();
 	}
 
 	public void closeConnection() {
@@ -57,13 +57,13 @@ public abstract class AbstractQuerier<T> implements Querier<T>{
 		}
 	}
 
-	protected abstract PreparedStatement createPreparedStatement(String query) throws SQLException;
+	protected abstract PreparedStatement createPreparedStatement() throws SQLException;
 	
 	public void checkForValidConsumerProperties(Properties props) {
-		Preconditions.checkNotNull(props.get(ConsumerProperties.JDBC_DRIVER_NAME),"Illegal Argument passed: JDBC Driver Name is Null.");
-		Preconditions.checkNotNull(props.get(ConsumerProperties.DB_URL),"Illegal Argument passed: JDBC DB URl is Null.");
-		Preconditions.checkNotNull(props.get(ConsumerProperties.USERNAME),"Illegal Argument passed: JDBC Username is Null.");
-		Preconditions.checkNotNull(props.get(ConsumerProperties.PASSWORD),"Illegal Argument passed: JDBC Password is Null.");
-		Preconditions.checkNotNull(props.get(ConsumerProperties.SQL_QUERY),"Illegal Argument passed: JDBC Driver Sql query is Null.");
+		Preconditions.checkNotNull(props.get(JdbcSourceConnectorConfig.JDBC_DRIVER_NAME),"Illegal Argument passed: JDBC Driver Name is Null.");
+		Preconditions.checkNotNull(props.get(JdbcSourceConnectorConfig.DB_URL),"Illegal Argument passed: JDBC DB URl is Null.");
+		Preconditions.checkNotNull(props.get(JdbcSourceConnectorConfig.USERNAME),"Illegal Argument passed: JDBC Username is Null.");
+		Preconditions.checkNotNull(props.get(JdbcSourceConnectorConfig.PASSWORD),"Illegal Argument passed: JDBC Password is Null.");
+		Preconditions.checkNotNull(props.get(JdbcSourceConnectorConfig.QUERY_STRING),"Illegal Argument passed: JDBC Driver Sql query is Null.");
 	}
 }

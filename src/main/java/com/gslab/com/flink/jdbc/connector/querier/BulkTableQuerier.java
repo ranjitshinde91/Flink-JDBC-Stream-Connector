@@ -10,6 +10,7 @@ import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gslab.com.flink.jdbc.connector.consumer.JdbcSourceConnectorConfig;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
 public class BulkTableQuerier<T> extends AbstractQuerier<T>{
@@ -38,7 +39,8 @@ public class BulkTableQuerier<T> extends AbstractQuerier<T>{
 
 
 	@Override
-	protected PreparedStatement createPreparedStatement(String query)throws SQLException {
+	protected PreparedStatement createPreparedStatement()throws SQLException {
+		String query = this.consProp.getProperty(JdbcSourceConnectorConfig.QUERY_STRING);
 		return dbConn.prepareStatement(query);
 	}
 	

@@ -1,12 +1,11 @@
 package com.gslab.com.flink.jdbc.connector.consumer;
 
+
 import java.sql.SQLException;
 import java.util.Properties;
-
-import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
-
 import com.gslab.com.flink.jdbc.connector.querier.BulkTableQuerier;
 import com.gslab.com.flink.jdbc.connector.querier.Querier;
+import com.gslab.com.flink.jdbc.connector.querier.TimestampIncrementingTableQuerier;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
 
@@ -20,7 +19,16 @@ public class JdbcConsumer<T> extends AbstractJdbcConsumer<T>{
 	
 	@Override
 	protected Querier<T> createQuerier(DeserializationSchema<T> valueDeserializer, Properties properties) throws ClassNotFoundException, SQLException {
-		return new BulkTableQuerier(valueDeserializer, properties);
+		String mode = properties.getProperty(JdbcSourceConnectorConfig.QUERY_MODE);
+		switch(mode){
+			case JdbcSourceConnectorConfig.MODE_BULK:
+				return new BulkTableQuerier(valueDeserializer, properties);
+			case JdbcSourceConnectorConfig.MODE_TIMESTAMP:
+			case JdbcSourceConnectorConfig.MODE_INCREMENTING:
+				return new TimestampIncrementingTableQuerier(valueDeserializer, properties);
+			default:
+		          throw new IllegalArgumentException("Unexpected query mode: " + mode);
+		}
 	}
 
 }
