@@ -25,21 +25,25 @@ public abstract class AbstractJdbcConsumer<T> extends  RichSourceFunction<T> imp
 	protected final DeserializationSchema<T> deserializer;
 	protected final Properties properties;
 	
-	public AbstractJdbcConsumer(DeserializationSchema<T> deserializer, Properties props) {
+	public AbstractJdbcConsumer(DeserializationSchema<T> deserializer, Properties props){
 		Preconditions.checkNotNull(deserializer, "Illegal Argument passed: valueDeserializer is Null.");
 		Preconditions.checkNotNull(props, "Illegal Argument passed: JDBC consumer properties are Null.");
 		this.deserializer = deserializer;
 		this.properties = props;
 	}
 	
-	protected abstract Querier<T> createQuerier(SourceContext<T> sourceContext, StreamingRuntimeContext runtimeContext, DeserializationSchema<T> valueDeserializer,
-			Properties properties) throws ClassNotFoundException, SQLException;
+	protected abstract Querier<T> createQuerier(DeserializationSchema<T> valueDeserializer, Properties properties) throws ClassNotFoundException, SQLException;
 
 	public void run(SourceContext<T> ctx)throws Exception {
-		this.querier = createQuerier(ctx, (StreamingRuntimeContext) getRuntimeContext(),  deserializer, properties);
-		this.querier.fetchAndEmitRecords();
+		this.querier.fetchAndEmitRecords(ctx);
 	}
 		
+
+	@Override
+	public void open(Configuration parameters) throws Exception {
+		this.querier = createQuerier(deserializer, properties);
+		this.querier.openConnection();
+	}
 
 	@Override
 	public void close() throws Exception {

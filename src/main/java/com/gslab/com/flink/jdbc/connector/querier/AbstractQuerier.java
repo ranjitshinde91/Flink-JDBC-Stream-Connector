@@ -18,21 +18,17 @@ import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
 public abstract class AbstractQuerier<T> implements Querier<T>{
 
-	protected final SourceContext<T> sourceContext;
-	protected final RuntimeContext runtimeContext;
+	protected SourceContext<T> sourceContext;
 	protected final DeserializationSchema<T> deserializer;
 	protected Properties consProp;
 	protected transient Connection dbConn;
 	protected PreparedStatement stmt;
 	private static Logger LOGGER = LoggerFactory.getLogger(AbstractQuerier.class);
 
-	public AbstractQuerier(SourceContext<T> sourceContext, StreamingRuntimeContext runtimeContext, DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
+	public AbstractQuerier(DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
 		checkForValidConsumerProperties(props);
-		this.sourceContext = sourceContext;
-		this.runtimeContext = runtimeContext;
 		this.deserializer = deserializer;
 		this.consProp = props;
-		openConnection();
 	}
 	
 	public void openConnection() throws ClassNotFoundException, SQLException{

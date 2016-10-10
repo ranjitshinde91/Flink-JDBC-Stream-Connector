@@ -15,11 +15,12 @@ import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 public class BulkTableQuerier<T> extends AbstractQuerier<T>{
 	private static Logger LOGGER = LoggerFactory.getLogger(BulkTableQuerier.class);
 
-	public BulkTableQuerier(SourceContext<T> sourceContext, StreamingRuntimeContext runtimeContext, DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
-		super(sourceContext, runtimeContext, deserializer, props);
+	public BulkTableQuerier(DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
+		super(deserializer, props);
 	}
 
-	public void fetchAndEmitRecords(){
+	public void fetchAndEmitRecords(SourceContext<T> sourceContext){
+		this.sourceContext = sourceContext;
 		try {
 			LOGGER.info("fetching records from database.");
 			ResultSet rs = stmt.executeQuery();
@@ -44,4 +45,5 @@ public class BulkTableQuerier<T> extends AbstractQuerier<T>{
 	protected void emitRecord(T record) {
 		sourceContext.collect(record);
 	}
+
 }

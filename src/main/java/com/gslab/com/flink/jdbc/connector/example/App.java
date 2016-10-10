@@ -25,7 +25,7 @@ public class App {
         properties.setProperty(ConsumerProperties.DB_URL, "jdbc:mysql://localhost/kzphase1");
         properties.setProperty(ConsumerProperties.USERNAME, "root");
         properties.setProperty(ConsumerProperties.PASSWORD, "123");
-        properties.setProperty(ConsumerProperties.SQL_QUERY, "SELECT * FROM user ");
+        properties.setProperty(ConsumerProperties.SQL_QUERY, "SELECT * FROM user");
         
         DeserializationSchema<ObjectNode> jsonDeserialiationSchema =  new JSONDeserializationSchema();
         DataStreamSource<ObjectNode> stream = (DataStreamSource<ObjectNode>)env.addSource(new JdbcConsumer(jsonDeserialiationSchema, properties));

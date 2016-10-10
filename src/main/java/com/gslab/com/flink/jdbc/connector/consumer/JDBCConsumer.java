@@ -19,9 +19,8 @@ public class JdbcConsumer<T> extends AbstractJdbcConsumer<T>{
 	}
 	
 	@Override
-	protected Querier<T> createQuerier(SourceContext<T> sourceContext, StreamingRuntimeContext runtimeContext, DeserializationSchema<T> valueDeserializer,
-												Properties properties) throws ClassNotFoundException, SQLException {
-		return new BulkTableQuerier(sourceContext, runtimeContext, valueDeserializer, properties);
+	protected Querier<T> createQuerier(DeserializationSchema<T> valueDeserializer, Properties properties) throws ClassNotFoundException, SQLException {
+		return new BulkTableQuerier(valueDeserializer, properties);
 	}
 
 }
