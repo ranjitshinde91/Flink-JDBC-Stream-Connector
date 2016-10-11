@@ -5,17 +5,19 @@ import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.state.CheckpointListener;
 import org.apache.flink.streaming.api.checkpoint.Checkpointed;
+import org.apache.flink.streaming.api.checkpoint.CheckpointedAsynchronously;
 import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
+import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
 
 import com.google.common.base.Preconditions;
 import com.gslab.com.flink.jdbc.connector.querier.AbstractQuerier;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
-
 
 
 public abstract class AbstractJdbcConsumer<T> extends  RichSourceFunction<T> implements ResultTypeQueryable<T>, CheckpointListener, Checkpointed<Serializable>{
@@ -26,14 +28,14 @@ public abstract class AbstractJdbcConsumer<T> extends  RichSourceFunction<T> imp
 	protected final Properties properties;
 	protected String queryMode;
 	
-	public AbstractJdbcConsumer(DeserializationSchema<T> deserializer, Properties props){
+	public AbstractJdbcConsumer (DeserializationSchema<T> deserializer, Properties props){
 		Preconditions.checkNotNull(deserializer, "Illegal Argument passed: valueDeserializer is Null.");
 		Preconditions.checkNotNull(props, "Illegal Argument passed: JDBC consumer properties are Null.");
 		this.deserializer = deserializer;
 		this.properties = props;
 	}
 	
-	protected abstract AbstractQuerier<T> createQuerier(DeserializationSchema<T> valueDeserializer, Properties properties) throws ClassNotFoundException, SQLException;
+	protected abstract AbstractQuerier<T> createQuerier(RuntimeContext runtimeContext, DeserializationSchema<T> valueDeserializer, Properties properties) throws ClassNotFoundException, SQLException;
 
 	@Override
 	public void run(SourceContext<T> ctx)throws Exception {
@@ -43,7 +45,7 @@ public abstract class AbstractJdbcConsumer<T> extends  RichSourceFunction<T> imp
 
 	public void createQuerier() throws Exception{
 		if(this.querier == null)
-		this.querier = createQuerier(deserializer, properties);
+		this.querier = createQuerier((StreamingRuntimeContext) getRuntimeContext(), deserializer, properties);
 	}
 	@Override
 	public void open(Configuration parameters) throws Exception {

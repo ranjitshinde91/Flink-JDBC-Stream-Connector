@@ -1,6 +1,7 @@
 package com.gslab.com.flink.jdbc.connector.querier;
 
 import java.io.Serializable;
+import java.net.ConnectException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,10 +11,10 @@ import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.gslab.com.flink.jdbc.connector.consumer.JdbcSourceConnectorConfig;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 import com.gslab.com.flink.jdbc.connector.util.JdbcUtils;
@@ -31,10 +32,9 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 	  private Long incrementingOffset;
 	  private long timestampDelay = DEFAULT_TIMESTAMP_DELAY;
 	  protected transient JdbcConsumerState jdbcConsumerState;
-
 	  
-	  public TimestampIncrementingTableQuerier(DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
-		  super(deserializer, props);
+	  public TimestampIncrementingTableQuerier(RuntimeContext runtimeContext, DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
+		  super(runtimeContext, deserializer, props);
 		  checkForValidTimeOrIncProperties(props);
 		  this.incrementingColumn = props.getProperty(JdbcSourceConnectorConfig.INCREMENTING_COLUMN_NAME_CONFIG, null);
 		  this.timestampColumn = props.getProperty(JdbcSourceConnectorConfig.TIMESTAMP_COLUMN_NAME_CONFIG, null);
@@ -69,10 +69,10 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 			return stmt;
 	  }
 
-	  public void fetchAndEmitRecords(SourceContext<T> sourceContext) {
+	  public void fetchAndEmitRecords(SourceContext<T> sourceContext) throws SQLException, ConnectException {
 		  this.sourceContext = sourceContext;
+		  
 		  while(isRunning){
-			try {
 				if (incrementingColumn != null) {
 				      stmt.setLong(1, (incrementingOffset == null ? -1 : incrementingOffset));
 				      LOGGER.debug("Executing prepared statement with incrementing value = " + incrementingOffset);
@@ -88,16 +88,13 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 				while (rs.next()) {
 					T value = deserializer.deserialize(rs);
 					emitRecord(value);
-					if(rs.last()){
+					if(deserializer.isEndOfStream(rs)){
 						updateOffset(rs);
 					}
 				}
 				rs.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} 
+				isRunning = false;
 		  }
-			
 	  }
 	  
 	  private void updateOffset(ResultSet rs) throws SQLException {
@@ -164,7 +161,5 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 			this.timestampOffset = 0L;
 			this.incrementingOffset = 0L;
 		}
-
 	}
-
 }

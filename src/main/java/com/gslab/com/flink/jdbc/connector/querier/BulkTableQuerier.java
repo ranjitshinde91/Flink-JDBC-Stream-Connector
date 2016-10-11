@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,8 @@ public class BulkTableQuerier<T> extends AbstractQuerier<T>{
 
 	private boolean isRSExhausted = false;;
 
-	public BulkTableQuerier(DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
-		super(deserializer, props);
+	public BulkTableQuerier(RuntimeContext runtimeContext, DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
+		super(runtimeContext, deserializer, props);
 	}
 
 	public void fetchAndEmitRecords(SourceContext<T> sourceContext) throws SQLException{

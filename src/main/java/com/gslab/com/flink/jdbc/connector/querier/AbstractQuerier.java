@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 public abstract class AbstractQuerier<T> implements Querier<T>{
 
 	protected SourceContext<T> sourceContext;
+	protected final RuntimeContext runtimeContext;
 	protected final DeserializationSchema<T> deserializer;
 	protected Properties consProp;
 	protected transient Connection dbConn;
@@ -25,9 +27,10 @@ public abstract class AbstractQuerier<T> implements Querier<T>{
 	protected volatile boolean isRunning = true;
 	private static Logger LOGGER = LoggerFactory.getLogger(AbstractQuerier.class);
 
-	public AbstractQuerier(DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
+	public AbstractQuerier(RuntimeContext runtimeContext, DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
 		checkForValidConsumerProperties(props);
 		this.deserializer = deserializer;
+		this.runtimeContext = runtimeContext;
 		this.consProp = props;
 	}
 	

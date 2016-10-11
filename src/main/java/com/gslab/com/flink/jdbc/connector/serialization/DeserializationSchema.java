@@ -10,5 +10,5 @@ public interface DeserializationSchema<T> extends Serializable, ResultTypeQuerya
 	
 	T deserialize(ResultSet message) throws SQLException;
 
-	boolean isEndOfStream(T nextElement);
+	boolean isEndOfStream(ResultSet nextElement) throws SQLException;
 }
