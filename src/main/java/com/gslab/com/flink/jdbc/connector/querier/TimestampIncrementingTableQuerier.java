@@ -93,7 +93,6 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 					}
 				}
 				rs.close();
-				isRunning = false;
 		  }
 	  }
 	  
