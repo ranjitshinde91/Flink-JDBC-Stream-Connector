@@ -13,14 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import com.gslab.com.flink.jdbc.connector.consumer.JdbcSourceConnectorConfig;
 import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
+import com.gslab.com.flink.jdbc.connector.util.JdbcUtils;
 
 public class BulkTableQuerier<T> extends AbstractQuerier<T>{
 	private static Logger LOGGER = LoggerFactory.getLogger(BulkTableQuerier.class);
 	
 	private volatile Long numElementsEmitted = 0L;
-
-	private volatile Long numElementsToSkip = 0L;
-
 	private boolean isRSExhausted = false;;
 
 	public BulkTableQuerier(RuntimeContext runtimeContext, DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
@@ -30,27 +28,34 @@ public class BulkTableQuerier<T> extends AbstractQuerier<T>{
 	public void fetchAndEmitRecords(SourceContext<T> sourceContext) throws SQLException{
 		this.sourceContext = sourceContext;
 		while(isRunning && !isRSExhausted){
-			LOGGER.info("fetching records from database.");
+			LOGGER.info("fetching records from database from "+this.numElementsEmitted+" to "+(this.numElementsEmitted+this.fetchSize));
+			stmt.setLong(1, this.numElementsEmitted);
+			stmt.setLong(2, this.numElementsEmitted+this.fetchSize);
 			ResultSet rs = stmt.executeQuery();
-			
-			for(Long i=0L;i<=this.numElementsToSkip;i++){
-				rs.next();
+			this.checkpointLock = sourceContext.getCheckpointLock();
+			if (!rs.next()) {                            //if rs.next() returns false
+				isRSExhausted = true;
 			}
-			checkpointLock = sourceContext.getCheckpointLock();
-			while (rs.next()) {
-				T value = deserializer.deserialize(rs);
-				emitRecord(value);
+			else {
+				do {
+					T value = deserializer.deserialize(rs);
+					emitRecord(value);
+				}while (rs.next());
 			}
 			rs.close();
-			isRSExhausted = true;
 		}
 	}
 
 
 	@Override
 	protected PreparedStatement createPreparedStatement()throws SQLException {
-		String query = this.consProp.getProperty(JdbcSourceConnectorConfig.QUERY_STRING);
-		return dbConn.prepareStatement(query);
+		 StringBuilder builder = new StringBuilder();
+		 builder.append(this.consProp.getProperty(JdbcSourceConnectorConfig.QUERY_STRING));
+		 builder.append(" limit  ?,?");
+		 String queryString = builder.toString();
+		 LOGGER.debug("{} prepared SQL query: {}", this, queryString);
+		 stmt = dbConn.prepareStatement(queryString);
+		 return stmt;
 	}
 	
 	protected void emitRecord(T record) {
@@ -67,7 +72,7 @@ public class BulkTableQuerier<T> extends AbstractQuerier<T>{
 
 	@Override
 	public void restoreState(Serializable state) throws Exception {
-		this.numElementsToSkip = (Long) Long.parseLong(state.toString());
+		this.numElementsEmitted = (Long) Long.parseLong(state.toString());
 	}
 
 }

@@ -118,8 +118,6 @@ public class TimestampIncrementingTableQuerier<T> extends AbstractQuerier<T>{
 	public JdbcConsumerState snapshotState(long checkpointId, long checkpointTimestamp) throws Exception {
 		this.jdbcConsumerState.setIncrementingOffset(this.incrementingOffset);
 		this.jdbcConsumerState.setTimestampOffset(this.timestampOffset);
-		
-		System.out.println("this.timestampOffset "+this.timestampOffset +" this.incrementingOffset "+this.incrementingOffset);
 		return this.jdbcConsumerState;
 	}
 

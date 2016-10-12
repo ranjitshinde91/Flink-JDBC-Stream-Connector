@@ -17,6 +17,7 @@ import com.gslab.com.flink.jdbc.connector.serialization.DeserializationSchema;
 
 public abstract class AbstractQuerier<T> implements Querier<T>{
 
+	private static final int  DEFAULT_FETCH_SIZE = 10;
 	protected SourceContext<T> sourceContext;
 	protected final RuntimeContext runtimeContext;
 	protected final DeserializationSchema<T> deserializer;
@@ -25,6 +26,7 @@ public abstract class AbstractQuerier<T> implements Querier<T>{
 	protected PreparedStatement stmt;
 	protected Object checkpointLock;
 	protected volatile boolean isRunning = true;
+	protected int fetchSize = DEFAULT_FETCH_SIZE;
 	private static Logger LOGGER = LoggerFactory.getLogger(AbstractQuerier.class);
 
 	public AbstractQuerier(RuntimeContext runtimeContext, DeserializationSchema<T> deserializer, Properties props) throws ClassNotFoundException, SQLException {
